@@ -3,7 +3,8 @@ import path from 'path';
 
 export const config = {
     ...baseConfig,
-    specs: [path.join(process.cwd(), 'test/belajar-bareng/**/*.js')],
+    logLevel: 'error',
+    specs: [path.join(process.cwd(), 'test/belajar-bareng/**/*.test.js')],
     capabilities: [{
         platformName: 'Android',
         'appium:app': path.join(process.cwd(), 'apps', 'app-release.apk'),
