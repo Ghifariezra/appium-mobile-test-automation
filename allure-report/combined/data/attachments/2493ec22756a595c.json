@@ -1,0 +1,8 @@
+{
+  "script": "<script> [20 bytes]",
+  "args": [
+    {
+      "appId": "com.saucelabs.mydemoapp.android"
+    }
+  ]
+}
