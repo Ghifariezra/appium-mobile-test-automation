@@ -24,9 +24,12 @@
   - [📥 Installation](#-installation)
   - [📲 Emulator Setup (PowerShell)](#-emulator-setup-powershell)
   - [🚀 Running Appium Server](#-running-appium-server)
+  - [🔎 Appium Inspector](#-appium-inspector)
   - [🧪 Running Tests](#-running-tests)
+  - [✅ Test Cases — Belajar Bareng](#-test-cases--belajar-bareng)
   - [📊 Test Reports](#-test-reports)
   - [🔍 Finding appPackage \& appActivity](#-finding-apppackage--appactivity)
+  - [🧩 Page Object Model (Belajar Bareng)](#-page-object-model-belajar-bareng)
   - [⚙️ Configuration Notes](#️-configuration-notes)
   - [🙈 .gitignore](#-gitignore)
 
@@ -42,6 +45,7 @@
 | ☕ Mocha | via `@wdio/mocha-framework` | Test framework |
 | ✅ Chai | `^6.2.2` | Assertion library |
 | 📊 Allure Reporter | `^2.43.0` | Rich HTML test reports |
+| 🧭 Appium Inspector | latest | GUI tool for inspecting elements & finding locators |
 
 ## 📂 Project Structure
 
@@ -56,7 +60,12 @@ sesi11/
 │   └── wdio.demo.conf.js        # ➕ Extends base -> SauceLabs Demo
 ├── test/
 │   ├── belajar-bareng/
-│   │   └── app.test.js
+│   │   ├── locators/
+│   │   │   └── login.locator.js  # 🔍 Element locators (Login screen)
+│   │   ├── pages/
+│   │   │   ├── base.page.js      # 🧱 Shared page actions (click, setValue)
+│   │   │   └── login.page.js     # 📄 Login page object
+│   │   └── app.test.js           # 🧪 Login test cases
 │   └── demo/
 │       └── app.test.js
 ├── allure-results/               # 🗃️ Raw test results (gitignored)
@@ -105,6 +114,13 @@ The base config (`config/wdio.conf.js`) points to `127.0.0.1:4723`, so the Appiu
 npx appium
 ```
 
+## 🔎 Appium Inspector
+
+Used to inspect the app's UI hierarchy and grab the locators (`resource-id`, `content-desc`, xpath) that back the Page Object files under `test/belajar-bareng/locators/`.
+
+- 📥 Installation guide: [Appium Inspector — Quickstart / Installation](https://appium.github.io/appium-inspector/latest/quickstart/installation/#appium-plugin)
+- Connect it to the running Appium server (`127.0.0.1:4723`) with the same capabilities used in `config/wdio.belajar.conf.js` / `config/wdio.demo.conf.js`.
+
 ## 🧪 Running Tests
 
 | Command | Description |
@@ -112,6 +128,14 @@ npx appium
 | `npm run test:belajar` | Run Belajar Bareng suite only |
 | `npm run test:demo` | Run SauceLabs Demo suite only |
 | `npm run test:all` | Run both suites sequentially |
+
+## ✅ Test Cases — Belajar Bareng
+
+| Test | Status | Description |
+|---|---|---|
+| should show error when login fields are empty | ✅ Active | Clicks login with empty fields, expects *"Semua field wajib diisi."* |
+| should show error when credentials are invalid | ✅ Active | Logs in with a wrong email/password, expects *"Email atau password yang Anda masukkan salah."* |
+| should successfully login with valid credentials | ⏭️ Skipped (`it.skip`) | Happy-path login with valid credentials — pending enablement |
 
 ## 📊 Test Reports
 
@@ -133,12 +157,24 @@ adb shell "dumpsys window | grep -E 'mCurrentFocus|mFocusedApp'"
 
 Use the output to fill in `appium:appPackage` and `appium:appActivity` in a new config file (`config/wdio.<app-name>.conf.js`), following the pattern set by `wdio.belajar.conf.js` / `wdio.demo.conf.js`.
 
+## 🧩 Page Object Model (Belajar Bareng)
+
+The Belajar Bareng suite follows a Page Object Model:
+
+- **`locators/login.locator.js`** — `LoginLocators` class holding raw selectors (`titleForm`, `usernameInput`, `passwordInput`, `loginBtn`, `registerBtn`) plus a `getErrorMessage(expectedMessage)` helper for dynamic error-toast lookups.
+- **`pages/base.page.js`** — `BasePage` class with shared actions: `clickElement()` and `setInputValue()`, both waiting for the element to be displayed first.
+- **`pages/login.page.js`** — `LoginPage extends BasePage`, exposes the locators as getters and a `login(email, password)` action method. Exported as a ready-to-use singleton (`export default new LoginPage()`), imported directly in `app.test.js`.
+
+This structure isn't applied to the SauceLabs Demo suite yet — only Belajar Bareng.
+
 ## ⚙️ Configuration Notes
 
 - **`config/wdio.conf.js`** — base config: `runner: 'local'`, connects to Appium at `127.0.0.1:4723`, `mocha` framework with a 60s timeout.
 - **`config/wdio.belajar.conf.js`** / **`config/wdio.demo.conf.js`** — extend the base config, overriding only `specs`, `capabilities` (APK path, `appPackage`, `appActivity`), and `reporters`.
+- **`config/wdio.belajar.conf.js`** now sets `logLevel: 'error'` to cut down on WebdriverIO console noise, and its `specs` glob was narrowed to `test/belajar-bareng/**/*.test.js` — this keeps `locators/` and `pages/` helper files from being picked up as spec files by the test runner.
 - **`appium:noReset: true`** is set in both configs so app state isn't reset between runs, keeping test execution fast.
 - **Reporters**: `spec` (console output) + `allure` (writes to a separate `allure-results/<app-name>` folder per app, so reports don't mix).
+- **`after` hook** in `test/belajar-bareng/app.test.js` now uses `driver.terminateApp('com.example.belajar_bareng')` instead of `driver.closeApp()` to close out the session between runs.
 
 ## 🙈 .gitignore
 
