@@ -5,6 +5,7 @@
   <img src="https://img.shields.io/badge/WebdriverIO-9.30.1-EA5906?logo=webdriverio&logoColor=white" alt="WebdriverIO" />
   <img src="https://img.shields.io/badge/Mocha-Test%20Framework-8D6748?logo=mocha&logoColor=white" alt="Mocha" />
   <img src="https://img.shields.io/badge/Allure-Report-FF3B3F?logo=qameta&logoColor=white" alt="Allure" />
+  <img src="https://img.shields.io/badge/Faker.js-Test%20Data-FF6F61?logo=javascript&logoColor=white" alt="Faker.js" />
   <img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white" alt="Android" />
 </p>
 
@@ -22,11 +23,15 @@
   - [📂 Project Structure](#-project-structure)
   - [✅ Prerequisites](#-prerequisites)
   - [📥 Installation](#-installation)
+  - [🔐 Environment Variables](#-environment-variables)
+  - [📶 Testing on a Physical Android 9 Device](#-testing-on-a-physical-android-9-device)
   - [📲 Emulator Setup (PowerShell)](#-emulator-setup-powershell)
   - [🚀 Running Appium Server](#-running-appium-server)
   - [🔎 Appium Inspector](#-appium-inspector)
   - [🧪 Running Tests](#-running-tests)
   - [✅ Test Cases — Belajar Bareng](#-test-cases--belajar-bareng)
+    - [🔑 Login (`specs/login.spec.js`)](#-login-specsloginspecjs)
+    - [📝 Register (`specs/register.spec.js`)](#-register-specsregisterspecjs)
   - [📊 Test Reports](#-test-reports)
   - [🔍 Finding appPackage \& appActivity](#-finding-apppackage--appactivity)
   - [🧩 Page Object Model (Belajar Bareng)](#-page-object-model-belajar-bareng)
@@ -44,6 +49,7 @@
 | 🌐 WebdriverIO | `^9.30.1` | Test runner & session management |
 | ☕ Mocha | via `@wdio/mocha-framework` | Test framework |
 | ✅ Chai | `^6.2.2` | Assertion library |
+| 🎲 @faker-js/faker | `^10.6.0` | Dynamic test data generation |
 | 📊 Allure Reporter | `^2.43.0` | Rich HTML test reports |
 | 🧭 Appium Inspector | latest | GUI tool for inspecting elements & finding locators |
 
@@ -52,22 +58,39 @@
 ```
 sesi11/
 ├── apps/
-│   ├── app-release.apk          # Belajar Bareng APK
-│   └── mda-2.2.0-25.apk         # SauceLabs My Demo App APK
+│   ├── app-release.apk           # Belajar Bareng APK
+│   └── mda-2.2.0-25.apk          # SauceLabs My Demo App APK
 ├── config/
-│   ├── wdio.conf.js             # 🧩 Base config (runner, host, port, framework)
-│   ├── wdio.belajar.conf.js     # ➕ Extends base -> Belajar Bareng
-│   └── wdio.demo.conf.js        # ➕ Extends base -> SauceLabs Demo
+│   ├── env.conf.js               # 🔐 Loads & validates .env (DEVICE_NAME, UDID)
+│   ├── wdio.conf.js              # 🧩 Base config (runner, host, port, framework)
+│   ├── wdio.belajar.conf.js      # ➕ Extends base -> Belajar Bareng
+│   └── wdio.demo.conf.js         # ➕ Extends base -> SauceLabs Demo
+├── guides/
+│   └── ANDROID-V9.md             # 📶 ADB Wireless setup guide (Android 9)
 ├── test/
 │   ├── belajar-bareng/
+│   │   ├── data/
+│   │   │   ├── index.js          # Combines register + login test data
+│   │   │   ├── login.data.js     # Data-driven login test cases (faker)
+│   │   │   └── register.data.js  # Data-driven register test cases (faker)
 │   │   ├── locators/
-│   │   │   └── login.locator.js  # 🔍 Element locators (Login screen)
+│   │   │   ├── auth/
+│   │   │   │   ├── auth.locator.js      # Shared base: getButton(), getErrorMessage()
+│   │   │   │   ├── login.locator.js     # LoginLocators extends AuthLocators
+│   │   │   │   └── register.locator.js  # RegisterLocators extends AuthLocators
+│   │   │   └── index.js          # Barrel export
 │   │   ├── pages/
-│   │   │   ├── base.page.js      # 🧱 Shared page actions (click, setValue)
-│   │   │   └── login.page.js     # 📄 Login page object
-│   │   └── app.test.js           # 🧪 Login test cases
+│   │   │   ├── base.page.js      # 🧱 Shared page actions
+│   │   │   ├── login.page.js     # 📄 Login page object
+│   │   │   └── register.page.js  # 📄 Register page object
+│   │   ├── specs/
+│   │   │   ├── login.spec.js     # 🧪 Data-driven login tests
+│   │   │   └── register.spec.js  # 🧪 Data-driven register tests
+│   │   └── utils/                # (reserved for shared test utilities)
 │   └── demo/
 │       └── app.test.js
+├── .env                          # 🔒 Local device config (gitignored)
+├── .env.example                  # Template for .env
 ├── allure-results/               # 🗃️ Raw test results (gitignored)
 ├── allure-report/                 # 📈 Generated HTML report
 ├── package.json
@@ -82,7 +105,7 @@ sesi11/
   ANDROID_HOME=C:\Users\USER\AppData\Local\Android\Sdk
   ANDROID_SDK_ROOT=C:\Users\USER\AppData\Local\Android\Sdk
   ```
-- An **AVD (emulator)** already created, e.g. `Pixel_5`
+- An **AVD (emulator)** already created, e.g. `Pixel_5` — or a physical device (see [Testing on a Physical Android 9 Device](#-testing-on-a-physical-android-9-device))
 - Target APKs available under `apps/`
 
 ## 📥 Installation
@@ -90,6 +113,28 @@ sesi11/
 ```bash
 npm install
 ```
+
+## 🔐 Environment Variables
+
+The Belajar Bareng suite reads its target device from a `.env` file. `config/env.conf.js` loads it and **fails fast** if either variable is missing.
+
+1. Copy the example file:
+   ```bash
+   cp .env.example .env
+   ```
+2. Fill in your device values:
+   ```
+   DEVICE_NAME="your_device_name"
+   UDID="your_device_udid"
+   ```
+
+## 📶 Testing on a Physical Android 9 Device
+
+`wdio.belajar.conf.js` sets `appium:autoGrantPermissions` and `appium:ignoreHiddenApiPolicyError` to work around permission issues on Android 9+. To run against a physical device over Wi-Fi (no USB cable needed once paired), follow:
+
+👉 **[ADB Wireless Setup Guide — `guides/ANDROID-V9.md`](./guides/ANDROID-V9.md)**
+
+The `UDID` you get from that guide (`IP:PORT`, e.g. `192.168.1.15:5555`) goes straight into your `.env` file.
 
 ## 📲 Emulator Setup (PowerShell)
 
@@ -119,23 +164,42 @@ npx appium
 Used to inspect the app's UI hierarchy and grab the locators (`resource-id`, `content-desc`, xpath) that back the Page Object files under `test/belajar-bareng/locators/`.
 
 - 📥 Installation guide: [Appium Inspector — Quickstart / Installation](https://appium.github.io/appium-inspector/latest/quickstart/installation/#appium-plugin)
-- Connect it to the running Appium server (`127.0.0.1:4723`) with the same capabilities used in `config/wdio.belajar.conf.js` / `config/wdio.demo.conf.js`.
+- Connect it to the running Appium server (`127.0.0.1:4723`) with the same capabilities used in `config/wdio.belajar.conf.js` / `config/wdio.demo.conf.js` (see the capability snippet at the top of `specs/register.spec.js`).
 
 ## 🧪 Running Tests
 
 | Command | Description |
 |---|---|
-| `npm run test:belajar` | Run Belajar Bareng suite only |
+| `npm run test:belajar` | Run Belajar Bareng suite (register + login specs) |
 | `npm run test:demo` | Run SauceLabs Demo suite only |
-| `npm run test:all` | Run both suites sequentially |
+| `npm run test:all` | Clean old reports, then run both suites sequentially |
+| `npm run clean:report` | Remove `allure-results/` and `allure-report/` |
 
 ## ✅ Test Cases — Belajar Bareng
 
-| Test | Status | Description |
-|---|---|---|
-| should show error when login fields are empty | ✅ Active | Clicks login with empty fields, expects *"Semua field wajib diisi."* |
-| should show error when credentials are invalid | ✅ Active | Logs in with a wrong email/password, expects *"Email atau password yang Anda masukkan salah."* |
-| should successfully login with valid credentials | ⏭️ Skipped (`it.skip`) | Happy-path login with valid credentials — pending enablement |
+Both specs are **data-driven** — each iterates over test cases defined in `test/belajar-bareng/data/`, generating dynamic values (emails, passwords, usernames) via `@faker-js/faker`.
+
+### 🔑 Login (`specs/login.spec.js`)
+
+| Case | Notes |
+|---|---|
+| Empty fields | Expects *"Semua field wajib diisi."* |
+| Missing email | Only password filled |
+| Invalid credentials | Random faker email/password |
+| SQL injection in email | `' OR '1'='1` |
+| Valid login | Fixed test account, expects success |
+
+### 📝 Register (`specs/register.spec.js`)
+
+| Case | Notes |
+|---|---|
+| Empty fields / missing username / missing email / missing password | Expects *"Semua field wajib diisi."* |
+| Invalid email format | Expects an email-format error |
+| Password < 6 characters | Expects *"Password minimal 6 karakter."* |
+| Username already exists | Fixed username `qa.tester` |
+| Email already exists | Fixed email `qa.tester@qa.tester.com` |
+| Valid registration | Random faker data, expects success |
+| SQL injection in email / username / password | Edge-case handling per field |
 
 ## 📊 Test Reports
 
@@ -146,6 +210,7 @@ Generate rich HTML reports with Allure:
 | `npm run allure:belajar` | `allure-report/belajar-bareng` |
 | `npm run allure:demo` | `allure-report/demo` |
 | `npm run allure:combined` | `allure-report/combined` |
+| `npm run allure:open` | Opens the combined report in the browser |
 
 ## 🔍 Finding appPackage & appActivity
 
@@ -159,32 +224,39 @@ Use the output to fill in `appium:appPackage` and `appium:appActivity` in a new 
 
 ## 🧩 Page Object Model (Belajar Bareng)
 
-The Belajar Bareng suite follows a Page Object Model:
+- **`locators/auth/auth.locator.js`** — `AuthLocators` base class shared by Login & Register: `getButton(text)` and `getErrorMessage(message)` (matches by `content-desc` or `text`).
+- **`locators/auth/login.locator.js`** — `LoginLocators extends AuthLocators`: `titleForm`, `usernameInput`, `passwordInput`, `loginBtn`, `toRegister`.
+- **`locators/auth/register.locator.js`** — `RegisterLocators extends AuthLocators`: `formRegister`, `getInput(id)`, `registerBtn`.
+- **`locators/index.js`** — barrel file re-exporting `LoginLocators` and `RegisterLocators`.
+- **`pages/base.page.js`** — `BasePage`: `clickElement()`, `setInputValue()` (now also waits for enabled + clears the field first), and `hideKeyboardIfVisible()`.
+- **`pages/login.page.js`** / **`pages/register.page.js`** — extend `BasePage`, expose locators as getters, each exported as a ready-to-use singleton.
 
-- **`locators/login.locator.js`** — `LoginLocators` class holding raw selectors (`titleForm`, `usernameInput`, `passwordInput`, `loginBtn`, `registerBtn`) plus a `getErrorMessage(expectedMessage)` helper for dynamic error-toast lookups.
-- **`pages/base.page.js`** — `BasePage` class with shared actions: `clickElement()` and `setInputValue()`, both waiting for the element to be displayed first.
-- **`pages/login.page.js`** — `LoginPage extends BasePage`, exposes the locators as getters and a `login(email, password)` action method. Exported as a ready-to-use singleton (`export default new LoginPage()`), imported directly in `app.test.js`.
+Specs no longer call a single combined `login()`/`register()` helper — they set each field individually via `setInputValue()`, so a test case can leave a field blank on purpose to trigger validation errors.
 
 This structure isn't applied to the SauceLabs Demo suite yet — only Belajar Bareng.
 
 ## ⚙️ Configuration Notes
 
-- **`config/wdio.conf.js`** — base config: `runner: 'local'`, connects to Appium at `127.0.0.1:4723`, `mocha` framework with a 60s timeout.
-- **`config/wdio.belajar.conf.js`** / **`config/wdio.demo.conf.js`** — extend the base config, overriding only `specs`, `capabilities` (APK path, `appPackage`, `appActivity`), and `reporters`.
-- **`config/wdio.belajar.conf.js`** now sets `logLevel: 'error'` to cut down on WebdriverIO console noise, and its `specs` glob was narrowed to `test/belajar-bareng/**/*.test.js` — this keeps `locators/` and `pages/` helper files from being picked up as spec files by the test runner.
-- **`appium:noReset: true`** is set in both configs so app state isn't reset between runs, keeping test execution fast.
-- **Reporters**: `spec` (console output) + `allure` (writes to a separate `allure-results/<app-name>` folder per app, so reports don't mix).
-- **`after` hook** in `test/belajar-bareng/app.test.js` now uses `driver.terminateApp('com.example.belajar_bareng')` instead of `driver.closeApp()` to close out the session between runs.
+- **`config/env.conf.js`** — loads `.env` via Node's `loadEnvFile`, and throws early if `DEVICE_NAME` or `UDID` is missing, before any test session starts.
+- **`config/wdio.belajar.conf.js`**:
+  - `specs` is now an explicit array (`register.spec.js`, `login.spec.js`) instead of a glob — replacing the old flat `app.test.js`, now split by feature.
+  - `appium:deviceName` and `appium:udid` are pulled from `ENV` (via `env.conf.js`) instead of a hardcoded `emulator-5554`.
+  - `appium:autoGrantPermissions` and `appium:ignoreHiddenApiPolicyError` were added for Android 9+ permission issues — see [Testing on a Physical Android 9 Device](#-testing-on-a-physical-android-9-device).
+- **`npm run test:all`** now runs `clean:report` first, so old Allure results don't leak into a fresh run.
+- Reporters unchanged: `spec` (console output) + `allure` (per-app `allure-results/<app-name>` folder).
 
 ## 🙈 .gitignore
 
 ```gitignore
 node_modules
 allure-results
+.env
+.env.*
+!.env.example
 # allure-report
 ```
 
-- `node_modules` and `allure-results` are ignored.
+- `node_modules`, `allure-results`, and `.env`/`.env.*` (except the committed `.env.example` template) are ignored.
 - `allure-report` is **not** ignored (line is commented out) — the generated HTML report stays tracked in git so it can be viewed directly from the repo without regenerating it.
 
 <!-- ---

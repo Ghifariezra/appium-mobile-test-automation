@@ -1,0 +1,4 @@
+{
+  "using": "xpath",
+  "value": "//*[contains(@content-desc, \"Semua field wajib diisi.\") or contains(@text, \"Semua field wajib diisi.\")]"
+}

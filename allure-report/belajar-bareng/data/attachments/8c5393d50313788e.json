@@ -1,0 +1,4 @@
+{
+  "using": "xpath",
+  "value": "//*[contains(@content-desc, \"Username sudah digunakan.\") or contains(@text, \"Username sudah digunakan.\")]"
+}

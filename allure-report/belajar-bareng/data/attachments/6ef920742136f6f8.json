@@ -1,0 +1,4 @@
+{
+  "using": "xpath",
+  "value": "//*[contains(@content-desc, \"Email atau password yang Anda masukkan salah.\") or contains(@text, \"Email atau password yang Anda masukkan salah.\")]"
+}

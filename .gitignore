@@ -1,3 +1,6 @@
 node_modules
 allure-results
+.env
+.env.*
+!.env.example
 # allure-report

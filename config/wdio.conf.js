@@ -17,6 +17,6 @@ export const config = {
 
     framework: 'mocha',
     mochaOpts: {
-        timeout: 60000
+        timeout: 60000,
     }
 };

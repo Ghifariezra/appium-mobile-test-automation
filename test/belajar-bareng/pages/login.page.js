@@ -1,4 +1,4 @@
-import { LoginLocators } from "../locators/login.locator.js";
+import { LoginLocators } from "../locators/index.js";
 import { BasePage } from "./base.page.js";
 
 export class LoginPage extends BasePage {
@@ -8,15 +8,10 @@ export class LoginPage extends BasePage {
     get passwordInput() { return this.#locators.passwordInput; }
     get loginBtn() { return this.#locators.loginBtn; }
     get titleForm() { return this.#locators.titleForm; }
+    get toRegister() { return this.#locators.toRegister; }
 
     getErrorMessage(expectedMessage) {
         return this.#locators.getErrorMessage(expectedMessage);
-    }
-
-    async login(email, password) {
-        await this.setInputValue(this.#locators.usernameInput, email);
-        await this.setInputValue(this.#locators.passwordInput, password);
-        await this.clickElement(this.#locators.loginBtn);
     }
 }
 
