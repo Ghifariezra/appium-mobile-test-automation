@@ -1,9 +1,9 @@
-const userFields = {
+export const userFields = {
     email: 'tester@example.com',
     password: '123456',
 };
 
-const loginErrorMessages = Object.freeze({
+export const loginErrorMessages = Object.freeze({
     emptyFields: 'Semua field wajib diisi.',
     invalidCredentials: 'Email atau password yang Anda masukkan salah.',
     loginSuccess: 'Login berhasil'

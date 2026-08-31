@@ -1,9 +1,11 @@
 import { faker } from '@faker-js/faker';
 import { getRegisterTestCases } from './register.data.js';
 import { getLoginTestCases } from './login.data.js';
+import { getPostTestCases } from './home.data.js';
 
 export const BELAJAR_BARANG_TEST_DATA = Object.freeze({
     appPackage: 'com.example.belajar_bareng',
     register: getRegisterTestCases(faker),
-    login: getLoginTestCases(faker)
+    login: getLoginTestCases(faker),
+    post: getPostTestCases()
 });

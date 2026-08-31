@@ -19,7 +19,7 @@ describe('Belajar Bareng - Register Page', () => {
         appPackage,
         register: registerTestCases
     } = BELAJAR_BARANG_TEST_DATA;
-    
+
     beforeEach(async () => {
         await driver.activateApp(appPackage);
         await loginPage.toRegister.waitForDisplayed({ timeout: 10000 }).catch(() => { });

@@ -30,7 +30,8 @@
   - [🔎 Appium Inspector](#-appium-inspector)
   - [🧪 Running Tests](#-running-tests)
   - [✅ Test Cases — Belajar Bareng](#-test-cases--belajar-bareng)
-    - [🔑 Login (`specs/login.spec.js`)](#-login-specsloginspecjs)
+    - [🔑 Login — Regression (`specs/login.spec.js`)](#-login--regression-specsloginspecjs)
+    - [🔥 Smoke — Post \& Logout (`specs/login.spec.js`)](#-smoke--post--logout-specsloginspecjs)
     - [📝 Register (`specs/register.spec.js`)](#-register-specsregisterspecjs)
   - [📊 Test Reports](#-test-reports)
   - [🔍 Finding appPackage \& appActivity](#-finding-apppackage--appactivity)
@@ -70,21 +71,23 @@ sesi11/
 ├── test/
 │   ├── belajar-bareng/
 │   │   ├── data/
-│   │   │   ├── index.js          # Combines register + login test data
-│   │   │   ├── login.data.js     # Data-driven login test cases (faker)
+│   │   │   ├── home.data.js      # Post & logout smoke test cases
+│   │   │   ├── index.js          # Combines register + login + post test data
+│   │   │   ├── login.data.js     # Data-driven login test cases (faker) — exports userFields, loginErrorMessages
 │   │   │   └── register.data.js  # Data-driven register test cases (faker)
 │   │   ├── locators/
 │   │   │   ├── auth/
 │   │   │   │   ├── auth.locator.js      # Shared base: getButton(), getErrorMessage()
 │   │   │   │   ├── login.locator.js     # LoginLocators extends AuthLocators
 │   │   │   │   └── register.locator.js  # RegisterLocators extends AuthLocators
+│   │   │   ├── home.locator.js   # HomeLocators extends AuthLocators (post feed & logout)
 │   │   │   └── index.js          # Barrel export
 │   │   ├── pages/
 │   │   │   ├── base.page.js      # 🧱 Shared page actions
-│   │   │   ├── login.page.js     # 📄 Login page object
+│   │   │   ├── login.page.js     # 📄 Login page object (also exposes Home locators post-login)
 │   │   │   └── register.page.js  # 📄 Register page object
 │   │   ├── specs/
-│   │   │   ├── login.spec.js     # 🧪 Data-driven login tests
+│   │   │   ├── login.spec.js     # 🧪 Data-driven login tests + post/logout smoke tests
 │   │   │   └── register.spec.js  # 🧪 Data-driven register tests
 │   │   └── utils/                # (reserved for shared test utilities)
 │   └── demo/
@@ -179,7 +182,7 @@ Used to inspect the app's UI hierarchy and grab the locators (`resource-id`, `co
 
 Both specs are **data-driven** — each iterates over test cases defined in `test/belajar-bareng/data/`, generating dynamic values (emails, passwords, usernames) via `@faker-js/faker`.
 
-### 🔑 Login (`specs/login.spec.js`)
+### 🔑 Login — Regression (`specs/login.spec.js`)
 
 | Case | Notes |
 |---|---|
@@ -188,6 +191,15 @@ Both specs are **data-driven** — each iterates over test cases defined in `tes
 | Invalid credentials | Random faker email/password |
 | SQL injection in email | `' OR '1'='1` |
 | Valid login | Fixed test account, expects success |
+
+### 🔥 Smoke — Post & Logout (`specs/login.spec.js`)
+
+Runs after a successful login using the fixed test account (`userFields` from `login.data.js`). Test cases are defined in `data/home.data.js`.
+
+| Case | Notes |
+|---|---|
+| Logout successfully | Login → verify Home title → logout → verify back on Login form |
+| Create a new post and logout successfully | Login → submit a post with dynamic content (`Date.now()`) → verify the post appears in the feed → logout → verify back on Login form |
 
 ### 📝 Register (`specs/register.spec.js`)
 
@@ -224,14 +236,19 @@ Use the output to fill in `appium:appPackage` and `appium:appActivity` in a new 
 
 ## 🧩 Page Object Model (Belajar Bareng)
 
-- **`locators/auth/auth.locator.js`** — `AuthLocators` base class shared by Login & Register: `getButton(text)` and `getErrorMessage(message)` (matches by `content-desc` or `text`).
+- **`locators/auth/auth.locator.js`** — `AuthLocators` base class shared by Login, Register & Home: `getButton(text)` and `getErrorMessage(message)` (matches by `content-desc` or `text`).
 - **`locators/auth/login.locator.js`** — `LoginLocators extends AuthLocators`: `titleForm`, `usernameInput`, `passwordInput`, `loginBtn`, `toRegister`.
 - **`locators/auth/register.locator.js`** — `RegisterLocators extends AuthLocators`: `formRegister`, `getInput(id)`, `registerBtn`.
-- **`locators/index.js`** — barrel file re-exporting `LoginLocators` and `RegisterLocators`.
+- **`locators/home.locator.js`** — `HomeLocators extends AuthLocators`: `titleHeader`, `logoutBtn`, `postInput`, `postBtn`, `postList`, `getPostByText(text)`.
+- **`locators/index.js`** — barrel file re-exporting `LoginLocators`, `RegisterLocators`, and `HomeLocators`.
 - **`pages/base.page.js`** — `BasePage`: `clickElement()`, `setInputValue()` (now also waits for enabled + clears the field first), and `hideKeyboardIfVisible()`.
-- **`pages/login.page.js`** / **`pages/register.page.js`** — extend `BasePage`, expose locators as getters, each exported as a ready-to-use singleton.
+- **`pages/login.page.js`** — extends `BasePage`, and now composes **two** locator instances: `#loginLocators` (login form fields) and `#homeLocators` (post/logout, exposed post-login). Getters: `usernameInput`, `passwordInput`, `loginBtn`, `titleForm`, `toRegister`, `getErrorMessage()` for login; `titleHome`, `logoutBtn`, `postInput`, `postBtn`, `postList`, `getPostByText()` for home.
+- **`pages/register.page.js`** — extends `BasePage`, exposes register locators as getters.
+- Both page objects are exported as ready-to-use singletons.
 
 Specs no longer call a single combined `login()`/`register()` helper — they set each field individually via `setInputValue()`, so a test case can leave a field blank on purpose to trigger validation errors.
+
+`login.data.js` now exports `userFields` and `loginErrorMessages` directly (previously module-private `const`s), so `login.spec.js` can reuse the fixed test account and success message for the post/logout smoke tests without duplicating them.
 
 This structure isn't applied to the SauceLabs Demo suite yet — only Belajar Bareng.
 

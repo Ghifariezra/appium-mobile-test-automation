@@ -1,0 +1,4 @@
+{
+  "using": "xpath",
+  "value": "//*[contains(@content-desc, \"Ini adalah konten post baru. 1788178470496\")]"
+}
