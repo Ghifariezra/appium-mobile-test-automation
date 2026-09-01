@@ -3,7 +3,7 @@ import path from 'path';
 
 export const config = {
     ...baseConfig,
-    specs: [path.join(process.cwd(), 'test/demo/**/*.js')],
+    specs: [path.join(process.cwd(), 'test/specs/demo/**/*.js')],
     capabilities: [{
         platformName: 'Android',
         'appium:app': path.join(process.cwd(), 'apps', 'mda-2.2.0-25.apk'),

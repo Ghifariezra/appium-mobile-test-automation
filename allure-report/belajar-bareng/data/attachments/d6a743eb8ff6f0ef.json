@@ -1,4 +1,0 @@
-{
-  "using": "xpath",
-  "value": "//*[contains(@content-desc, \"Password minimal 6 karakter.\") or contains(@text, \"Password minimal 6 karakter.\")]"
-}

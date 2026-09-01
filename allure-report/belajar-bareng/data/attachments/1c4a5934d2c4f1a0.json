@@ -1,4 +1,0 @@
-{
-  "using": "xpath",
-  "value": "//*[contains(@content-desc, \"Unable to validate email address: invalid format\") or contains(@text, \"Unable to validate email address: invalid format\")]"
-}
