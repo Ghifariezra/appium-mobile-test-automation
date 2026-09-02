@@ -21,8 +21,8 @@ export class HomePage extends BasePage {
 
         const createdPost = this.getPostByText(content);
 
-        await createdPost.waitForExist({ timeout: 25000 });
-        await createdPost.waitForDisplayed({ timeout: 10000 });
+        await createdPost.waitForExist({ timeout: 10000 });
+        await createdPost.waitForDisplayed({ timeout: 5000 });
 
         return createdPost;
     }

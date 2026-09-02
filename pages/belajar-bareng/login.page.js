@@ -36,8 +36,8 @@ export class LoginPage extends BasePage {
         await this.hideKeyboardIfVisible();
 
         const errorElement = this.getErrorMessage(expectedError);
-        await errorElement.waitForExist({ timeout: 25000 });
-        await errorElement.waitForDisplayed({ timeout: 10000 });
+        await errorElement.waitForExist({ timeout: 10000 });
+        await errorElement.waitForDisplayed({ timeout: 5000 });
 
         return errorElement;
     }

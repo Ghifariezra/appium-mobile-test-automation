@@ -30,9 +30,9 @@
   - [🔎 Appium Inspector](#-appium-inspector)
   - [🧪 Running Tests](#-running-tests)
   - [✅ Test Cases — Belajar Bareng](#-test-cases--belajar-bareng)
-    - [🔑 Login — Regression (`specs/login.spec.js`)](#-login--regression-specsloginspecjs)
-    - [🔥 Smoke — Post \& Logout (`specs/login.spec.js`)](#-smoke--post--logout-specsloginspecjs)
-    - [📝 Register (`specs/register.spec.js`)](#-register-specsregisterspecjs)
+    - [🔑 Login — Regression (`test/specs/belajar-bareng/login.spec.js`)](#-login--regression-testspecsbelajar-barengloginspecjs)
+    - [🔥 Smoke — Post \& Logout (`test/specs/belajar-bareng/login.spec.js`)](#-smoke--post--logout-testspecsbelajar-barengloginspecjs)
+    - [📝 Register (`test/specs/belajar-bareng/register.spec.js`)](#-register-testspecsbelajar-barengregisterspecjs)
   - [📊 Test Reports](#-test-reports)
   - [🔍 Finding appPackage \& appActivity](#-finding-apppackage--appactivity)
   - [🧩 Page Object Model (Belajar Bareng)](#-page-object-model-belajar-bareng)
@@ -56,6 +56,8 @@
 
 ## 📂 Project Structure
 
+> `data/`, `locators/` and `pages/` now live at the project root — they're shared, reusable layers, not test-only artifacts. `test/` holds only the spec files, grouped under `test/specs/<app>/`.
+
 ```
 sesi11/
 ├── apps/
@@ -66,32 +68,40 @@ sesi11/
 │   ├── wdio.conf.js              # 🧩 Base config (runner, host, port, framework)
 │   ├── wdio.belajar.conf.js      # ➕ Extends base -> Belajar Bareng
 │   └── wdio.demo.conf.js         # ➕ Extends base -> SauceLabs Demo
+├── data/
+│   ├── belajar-bareng/
+│   │   ├── home.data.js          # Post & logout smoke test cases
+│   │   ├── index.js              # Combines register + login + post test data
+│   │   ├── login.data.js         # Data-driven login test cases (faker) — exports userFields, loginErrorMessages
+│   │   └── register.data.js      # Data-driven register test cases (faker)
+│   └── demo/                     # (reserved for SauceLabs Demo test data)
 ├── guides/
 │   └── ANDROID-V9.md             # 📶 ADB Wireless setup guide (Android 9)
-├── test/
+├── locators/
 │   ├── belajar-bareng/
-│   │   ├── data/
-│   │   │   ├── home.data.js      # Post & logout smoke test cases
-│   │   │   ├── index.js          # Combines register + login + post test data
-│   │   │   ├── login.data.js     # Data-driven login test cases (faker) — exports userFields, loginErrorMessages
-│   │   │   └── register.data.js  # Data-driven register test cases (faker)
-│   │   ├── locators/
-│   │   │   ├── auth/
-│   │   │   │   ├── auth.locator.js      # Shared base: getButton(), getErrorMessage()
-│   │   │   │   ├── login.locator.js     # LoginLocators extends AuthLocators
-│   │   │   │   └── register.locator.js  # RegisterLocators extends AuthLocators
-│   │   │   ├── home.locator.js   # HomeLocators extends AuthLocators (post feed & logout)
-│   │   │   └── index.js          # Barrel export
-│   │   ├── pages/
-│   │   │   ├── base.page.js      # 🧱 Shared page actions
-│   │   │   ├── login.page.js     # 📄 Login page object (also exposes Home locators post-login)
-│   │   │   └── register.page.js  # 📄 Register page object
-│   │   ├── specs/
-│   │   │   ├── login.spec.js     # 🧪 Data-driven login tests + post/logout smoke tests
-│   │   │   └── register.spec.js  # 🧪 Data-driven register tests
-│   │   └── utils/                # (reserved for shared test utilities)
+│   │   ├── auth/
+│   │   │   ├── auth.locator.js      # Shared base: getButton(), getErrorMessage() (accessibility id based)
+│   │   │   ├── login.locator.js     # LoginLocators extends AuthLocators
+│   │   │   └── register.locator.js  # RegisterLocators extends AuthLocators
+│   │   ├── home.locator.js       # HomeLocators extends AuthLocators (post feed & logout)
+│   │   └── index.js              # Barrel export
 │   └── demo/
-│       └── app.test.js
+│       ├── base.locator.js       # BaseLocators — menu, logout, header, checkout badge
+│       └── login.locator.js      # LoginLocators extends BaseLocators
+├── pages/
+│   ├── belajar-bareng/
+│   │   ├── base.page.js          # 🧱 Shared page actions
+│   │   ├── home.page.js          # 📄 Home page object (posting + feed verification)
+│   │   ├── login.page.js         # 📄 Login page object (unified login() for regression/smoke)
+│   │   └── register.page.js      # 📄 Register page object
+│   └── demo/                     # (reserved for SauceLabs Demo page objects)
+├── test/
+│   └── specs/
+│       ├── belajar-bareng/
+│       │   ├── login.spec.js     # 🧪 Data-driven login tests + post/logout smoke tests
+│       │   └── register.spec.js  # 🧪 Data-driven register tests
+│       └── demo/
+│           └── app.test.js
 ├── .env                          # 🔒 Local device config (gitignored)
 ├── .env.example                  # Template for .env
 ├── allure-results/               # 🗃️ Raw test results (gitignored)
@@ -119,7 +129,9 @@ npm install
 
 ## 🔐 Environment Variables
 
-The Belajar Bareng suite reads its target device from a `.env` file. `config/env.conf.js` loads it and **fails fast** if either variable is missing.
+By default, `config/wdio.belajar.conf.js` targets the local emulator directly (`appium:deviceName: "emulator-5554"`), so `.env` is **not required** for emulator runs.
+
+The `.env`-based `DEVICE_NAME` / `UDID` block in that config is kept commented out as a ready-to-use alternative for targeting a **real device**. `config/env.conf.js` loads `.env` via Node's `loadEnvFile` and **fails fast** if either variable is missing, so only set it up if you plan to uncomment that block:
 
 1. Copy the example file:
    ```bash
@@ -130,10 +142,11 @@ The Belajar Bareng suite reads its target device from a `.env` file. `config/env
    DEVICE_NAME="your_device_name"
    UDID="your_device_udid"
    ```
+3. In `config/wdio.belajar.conf.js`, comment out `appium:deviceName: "emulator-5554"` and uncomment the `ENV.DEVICE_NAME` / `ENV.UDID` lines.
 
 ## 📶 Testing on a Physical Android 9 Device
 
-`wdio.belajar.conf.js` sets `appium:autoGrantPermissions` and `appium:ignoreHiddenApiPolicyError` to work around permission issues on Android 9+. To run against a physical device over Wi-Fi (no USB cable needed once paired), follow:
+`wdio.belajar.conf.js` includes commented-out `appium:autoGrantPermissions` and `appium:ignoreHiddenApiPolicyError` capabilities to work around permission issues on Android 9+. Uncomment them (alongside the `.env`-based device config above) when running against a physical Android 9 device over Wi-Fi (no USB cable needed once paired), following:
 
 👉 **[ADB Wireless Setup Guide — `guides/ANDROID-V9.md`](./guides/ANDROID-V9.md)**
 
@@ -164,25 +177,25 @@ npx appium
 
 ## 🔎 Appium Inspector
 
-Used to inspect the app's UI hierarchy and grab the locators (`resource-id`, `content-desc`, xpath) that back the Page Object files under `test/belajar-bareng/locators/`.
+Used to inspect the app's UI hierarchy and grab the locators (`resource-id`, accessibility id, xpath) that back the Page Object files under `locators/belajar-bareng/`.
 
 - 📥 Installation guide: [Appium Inspector — Quickstart / Installation](https://appium.github.io/appium-inspector/latest/quickstart/installation/#appium-plugin)
-- Connect it to the running Appium server (`127.0.0.1:4723`) with the same capabilities used in `config/wdio.belajar.conf.js` / `config/wdio.demo.conf.js` (see the capability snippet at the top of `specs/register.spec.js`).
+- Connect it to the running Appium server (`127.0.0.1:4723`) with the same capabilities used in `config/wdio.belajar.conf.js` / `config/wdio.demo.conf.js` (see the capability snippet at the top of `test/specs/belajar-bareng/register.spec.js`).
 
 ## 🧪 Running Tests
 
 | Command | Description |
 |---|---|
-| `npm run test:belajar` | Run Belajar Bareng suite (register + login specs) |
+| `npm run test:belajar` | Run Belajar Bareng suite (currently only `login.spec.js` is active — see [Configuration Notes](#️-configuration-notes)) |
 | `npm run test:demo` | Run SauceLabs Demo suite only |
 | `npm run test:all` | Clean old reports, then run both suites sequentially |
 | `npm run clean:report` | Remove `allure-results/` and `allure-report/` |
 
 ## ✅ Test Cases — Belajar Bareng
 
-Both specs are **data-driven** — each iterates over test cases defined in `test/belajar-bareng/data/`, generating dynamic values (emails, passwords, usernames) via `@faker-js/faker`.
+Both specs are **data-driven** — each iterates over test cases defined in `data/belajar-bareng/`, generating dynamic values (emails, passwords, usernames) via `@faker-js/faker`.
 
-### 🔑 Login — Regression (`specs/login.spec.js`)
+### 🔑 Login — Regression (`test/specs/belajar-bareng/login.spec.js`)
 
 | Case | Notes |
 |---|---|
@@ -192,16 +205,16 @@ Both specs are **data-driven** — each iterates over test cases defined in `tes
 | SQL injection in email | `' OR '1'='1` |
 | Valid login | Fixed test account, expects success |
 
-### 🔥 Smoke — Post & Logout (`specs/login.spec.js`)
+### 🔥 Smoke — Post & Logout (`test/specs/belajar-bareng/login.spec.js`)
 
-Runs after a successful login using the fixed test account (`userFields` from `login.data.js`). Test cases are defined in `data/home.data.js`.
+Runs after a successful login using the fixed test account (`userFields` from `login.data.js`). Test cases are defined in `data/belajar-bareng/home.data.js`.
 
 | Case | Notes |
 |---|---|
 | Logout successfully | Login → verify Home title → logout → verify back on Login form |
-| Create a new post and logout successfully | Login → submit a post with dynamic content (`Date.now()`) → verify the post appears in the feed → logout → verify back on Login form |
+| Create a new post and logout successfully | Login → submit a post with dynamic content (`Date.now()`) via `HomePage.postContent()` → verify the post appears in the feed → logout → verify back on Login form |
 
-### 📝 Register (`specs/register.spec.js`)
+### 📝 Register (`test/specs/belajar-bareng/register.spec.js`)
 
 | Case | Notes |
 |---|---|
@@ -212,6 +225,8 @@ Runs after a successful login using the fixed test account (`userFields` from `l
 | Email already exists | Fixed email `qa.tester@qa.tester.com` |
 | Valid registration | Random faker data, expects success |
 | SQL injection in email / username / password | Edge-case handling per field |
+
+> ⚠️ `register.spec.js` is currently **commented out** in `config/wdio.belajar.conf.js`'s `specs` array — uncomment that line to include it in `npm run test:belajar`.
 
 ## 📊 Test Reports
 
@@ -236,29 +251,33 @@ Use the output to fill in `appium:appPackage` and `appium:appActivity` in a new 
 
 ## 🧩 Page Object Model (Belajar Bareng)
 
-- **`locators/auth/auth.locator.js`** — `AuthLocators` base class shared by Login, Register & Home: `getButton(text)` and `getErrorMessage(message)` (matches by `content-desc` or `text`).
-- **`locators/auth/login.locator.js`** — `LoginLocators extends AuthLocators`: `titleForm`, `usernameInput`, `passwordInput`, `loginBtn`, `toRegister`.
-- **`locators/auth/register.locator.js`** — `RegisterLocators extends AuthLocators`: `formRegister`, `getInput(id)`, `registerBtn`.
-- **`locators/home.locator.js`** — `HomeLocators extends AuthLocators`: `titleHeader`, `logoutBtn`, `postInput`, `postBtn`, `postList`, `getPostByText(text)`.
-- **`locators/index.js`** — barrel file re-exporting `LoginLocators`, `RegisterLocators`, and `HomeLocators`.
-- **`pages/base.page.js`** — `BasePage`: `clickElement()`, `setInputValue()` (now also waits for enabled + clears the field first), and `hideKeyboardIfVisible()`.
-- **`pages/login.page.js`** — extends `BasePage`, and now composes **two** locator instances: `#loginLocators` (login form fields) and `#homeLocators` (post/logout, exposed post-login). Getters: `usernameInput`, `passwordInput`, `loginBtn`, `titleForm`, `toRegister`, `getErrorMessage()` for login; `titleHome`, `logoutBtn`, `postInput`, `postBtn`, `postList`, `getPostByText()` for home.
-- **`pages/register.page.js`** — extends `BasePage`, exposes register locators as getters.
-- Both page objects are exported as ready-to-use singletons.
+- **`locators/belajar-bareng/auth/auth.locator.js`** — `AuthLocators` base class shared by Login, Register & Home: `getButton(text)` and `getErrorMessage(message)`, both now resolved via **accessibility id** (`~text`) instead of xpath `content-desc` matching.
+- **`locators/belajar-bareng/auth/login.locator.js`** — `LoginLocators extends AuthLocators`: `titleForm` (now `~Belajar Bareng`), `usernameInput` / `passwordInput` (now explicit `android.widget.EditText` xpaths by `resource-id`), `loginBtn`, `toRegister`.
+- **`locators/belajar-bareng/auth/register.locator.js`** — `RegisterLocators extends AuthLocators`: `formRegister`, `getInput(id)`, `registerBtn`.
+- **`locators/belajar-bareng/home.locator.js`** — `HomeLocators extends AuthLocators`: `titleHeader`, `logoutBtn`, `postInput` (simplified to a plain `android.widget.EditText` class-name locator), `postBtn`, `postList`, `getPostByText(text)`.
+- **`locators/belajar-bareng/index.js`** — barrel file re-exporting `LoginLocators`, `RegisterLocators`, and `HomeLocators`.
+- **`locators/demo/`** — new locator classes for the SauceLabs Demo app: `base.locator.js` (`BaseLocators`: `humbergerMenu`, `logoutBtn`, `titleHeader`, `checkoutBtn`) and `login.locator.js` (`LoginLocators extends BaseLocators`: `usernameInput`, `passwordInput`, `loginBtn`). Groundwork for a future Demo suite refactor — page objects for it aren't built out yet.
+- **`pages/belajar-bareng/base.page.js`** — `BasePage`: `clickElement()`, `setInputValue()`, and `hideKeyboardIfVisible()`.
+- **`pages/belajar-bareng/login.page.js`** — extends `BasePage`, now **only** handles login. Exposes `usernameInput`, `passwordInput`, `loginBtn`, `titleForm`, `toRegister`, `getErrorMessage()`, plus a single unified `login(email, password, expectedError, typeTest)` method:
+  - `typeTest: 'regression'` — clears each field first and only fills it if a value was passed, so a test case can intentionally leave a field blank to trigger validation errors.
+  - `typeTest: 'smoke'` — fills both fields directly with the fixed test account.
+  - In both cases it submits the form, waits for the resulting error/success message, and returns that element.
+- **`pages/belajar-bareng/home.page.js`** — **new** page object, split out of what used to live inside `login.page.js`. Exposes `titleHome`, `logoutBtn`, `postInput`, `postBtn`, `postList`, `getPostByText()`, plus a `postContent(content)` method that types the content, hides the keyboard, submits, and waits for the new post to appear in the feed.
+- **`pages/belajar-bareng/register.page.js`** — extends `BasePage`, exposes register locators as getters.
+- All page objects are exported as ready-to-use singletons.
 
-Specs no longer call a single combined `login()`/`register()` helper — they set each field individually via `setInputValue()`, so a test case can leave a field blank on purpose to trigger validation errors.
+Specs now call `loginPage.login(...)` (and, for the smoke flow, `homePage.postContent(...)` / `homePage.clickElement(homePage.logoutBtn)`) instead of setting each field individually inline — the per-field, per-case data-driven behavior for regression tests now lives inside `LoginPage.login()`.
 
-`login.data.js` now exports `userFields` and `loginErrorMessages` directly (previously module-private `const`s), so `login.spec.js` can reuse the fixed test account and success message for the post/logout smoke tests without duplicating them.
-
-This structure isn't applied to the SauceLabs Demo suite yet — only Belajar Bareng.
+This page object structure isn't applied to the SauceLabs Demo suite yet — only Belajar Bareng. The new `locators/demo/` classes are a first step toward it.
 
 ## ⚙️ Configuration Notes
 
-- **`config/env.conf.js`** — loads `.env` via Node's `loadEnvFile`, and throws early if `DEVICE_NAME` or `UDID` is missing, before any test session starts.
+- **`config/env.conf.js`** — loads `.env` via Node's `loadEnvFile`, and throws early if `DEVICE_NAME` or `UDID` is missing, before any test session starts. Only relevant if you switch `wdio.belajar.conf.js` to the real-device (`ENV.*`) capabilities.
 - **`config/wdio.belajar.conf.js`**:
-  - `specs` is now an explicit array (`register.spec.js`, `login.spec.js`) instead of a glob — replacing the old flat `app.test.js`, now split by feature.
-  - `appium:deviceName` and `appium:udid` are pulled from `ENV` (via `env.conf.js`) instead of a hardcoded `emulator-5554`.
-  - `appium:autoGrantPermissions` and `appium:ignoreHiddenApiPolicyError` were added for Android 9+ permission issues — see [Testing on a Physical Android 9 Device](#-testing-on-a-physical-android-9-device).
+  - `specs` now points at `test/specs/belajar-bareng/`; `register.spec.js` is currently **commented out**, so only `login.spec.js` runs by default.
+  - `appium:deviceName` defaults to a hardcoded `"emulator-5554"` for local emulator runs. The `appium:deviceName: ENV.DEVICE_NAME` / `appium:udid: ENV.UDID` lines are kept commented out as the real-device alternative.
+  - `appium:autoGrantPermissions` and `appium:ignoreHiddenApiPolicyError` are commented out by default; uncomment for Android 9+ permission issues — see [Testing on a Physical Android 9 Device](#-testing-on-a-physical-android-9-device).
+- **`config/wdio.demo.conf.js`** — `specs` now points at `test/specs/demo/**/*.js` (was `test/demo/**/*.js`).
 - **`npm run test:all`** now runs `clean:report` first, so old Allure results don't leak into a fresh run.
 - Reporters unchanged: `spec` (console output) + `allure` (per-app `allure-results/<app-name>` folder).
 
