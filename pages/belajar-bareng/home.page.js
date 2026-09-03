@@ -1,5 +1,5 @@
 import { HomeLocators } from "../../locators/belajar-bareng/index.js";
-import { BasePage } from "./base.page.js";
+import { BasePage } from "../base.page.js";
 
 export class HomePage extends BasePage {
     #homeLocators = new HomeLocators();
@@ -16,12 +16,13 @@ export class HomePage extends BasePage {
 
         await this.hideKeyboardIfVisible();
         await this.clickElement(this.postBtn);
-
         await this.hideKeyboardIfVisible();
+
+        await driver.pause(2000);
 
         const createdPost = this.getPostByText(content);
 
-        await createdPost.waitForExist({ timeout: 10000 });
+        await createdPost.waitForExist({ timeout: 15000 });
         await createdPost.waitForDisplayed({ timeout: 5000 });
 
         return createdPost;

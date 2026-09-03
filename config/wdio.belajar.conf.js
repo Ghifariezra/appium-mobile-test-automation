@@ -4,7 +4,6 @@ import path from 'path';
 
 export const config = {
     ...baseConfig,
-    logLevel: 'error',
     specs: [
         [
             // path.join(process.cwd(), 'test/specs/belajar-bareng/register.spec.js').replace(/\\/g, '/'),

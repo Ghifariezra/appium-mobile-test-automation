@@ -1,5 +1,5 @@
 import { RegisterLocators } from "../../locators/belajar-bareng/index.js";
-import { BasePage } from "./base.page.js";
+import { BasePage } from "../base.page.js";
 
 export class RegisterPage extends BasePage {
     #locators = new RegisterLocators();

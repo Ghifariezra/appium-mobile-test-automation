@@ -3,7 +3,7 @@ import { AuthLocators } from "./auth/auth.locator";
 export class HomeLocators extends AuthLocators {
     #titleHeader = 'Belajar Bareng';
     #logoutBtn = 'android=new UiSelector().className("android.widget.Button").instance(0)';
-    #postInput = 'android.widget.EditText';
+    #postInput = '//android.widget.EditText';
     #postBtn = 'Posting';
     #postList = 'android=new UiSelector().className("android.widget.ScrollView")';
 
@@ -14,6 +14,9 @@ export class HomeLocators extends AuthLocators {
     get postList() { return $(this.#postList); }
 
     getPostByText(text) {
-        return $(`//*[contains(@content-desc, "${text}")]`);
+        return $(
+            `android=new UiScrollable(new UiSelector().scrollable(true))` +
+            `.scrollIntoView(new UiSelector().descriptionContains("${text}"))`
+        );
     }
 }

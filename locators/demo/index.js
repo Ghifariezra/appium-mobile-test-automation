@@ -1,0 +1,1 @@
+export { LoginLocators } from "./login.locator.js";

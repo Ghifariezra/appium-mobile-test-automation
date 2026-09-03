@@ -1,0 +1,1 @@
+stale element reference: WebDriverError: The element 'By.accessibilityId: App logo and name' is not linked to the same object in DOM anymore when running "element/00000000-0000-017d-ffff-ffff00000007/displayed" with method "GET"

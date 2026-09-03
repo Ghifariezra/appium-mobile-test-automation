@@ -1,5 +1,5 @@
 import { LoginLocators } from "../../locators/belajar-bareng/index.js";
-import { BasePage } from "./base.page.js";
+import { BasePage } from "../base.page.js";
 
 export class LoginPage extends BasePage {
     #loginLocators = new LoginLocators();

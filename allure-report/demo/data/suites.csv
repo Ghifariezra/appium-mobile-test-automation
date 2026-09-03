@@ -1,0 +1,5 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","34912","[Regression] should successfully login with valid credentials","SauceLabs Demo - Login Page","2026-09-02","passed","2026-09-02","","","",""
+"","12105","[Regression] should show error when fields are empty","SauceLabs Demo - Login Page","2026-09-02","passed","2026-09-02","","","",""
+"","28260","[Regression] should show error when account is locked","SauceLabs Demo - Login Page","2026-09-02","passed","2026-09-02","","","",""
+"","23274","[Regression] should show error when password is missing","SauceLabs Demo - Login Page","2026-09-02","passed","2026-09-02","","","",""
